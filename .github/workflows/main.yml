@@ -39,12 +39,20 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
-        run: gradle assembleDebug
+      - name: Find and build Android project
+        run: |
+          PROJECT_DIR=$(find . -type f -path '*/app/build.gradle' -print -quit | sed 's#/app/build.gradle##')
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERROR: app/build.gradle not found"
+            find . -maxdepth 5 -name build.gradle -print
+            exit 1
+          fi
+          echo "Building project in: $PROJECT_DIR"
+          gradle -p "$PROJECT_DIR" assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: PSShop-Standalone-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          
+          path: '**/app/build/outputs/apk/debug/app-debug.apk'
+          if-no-files-found: error
